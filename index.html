@@ -78,26 +78,21 @@
     min-width: 35px;
     color: #333;
   }
-
 </style>
 </head>
 
 <body>
 
 <div class="card">
-
   <div class="label">Kalan Süre</div>
   <div id="timer">5</div>
-
   <div class="status" id="status">Hazır</div>
-
   <div class="level-container">
     <div class="bar-bg">
       <div id="levelBar"></div>
     </div>
     <div id="levelValue">0</div>
   </div>
-
 </div>
 
 <script>
@@ -106,12 +101,10 @@ let stream;
 let countdown = 5;
 let timerInterval;
 let levelInterval;
-
 let audioContext;
 let analyser;
 let microphone;
 let dataArray;
-
 let levels = [];
 
 function startTimer() {
@@ -121,7 +114,6 @@ function startTimer() {
   timerInterval = setInterval(() => {
     countdown--;
     document.getElementById("timer").innerText = countdown;
-
     if (countdown <= 0) {
       stopMeasurement();
     }
@@ -129,7 +121,6 @@ function startTimer() {
 }
 
 async function startRecording() {
-
   levels = [];
 
   document.getElementById("status").innerHTML =
@@ -153,60 +144,47 @@ async function startRecording() {
 }
 
 function startLevelLoop() {
-
   clearInterval(levelInterval);
 
   levelInterval = setInterval(() => {
-
     analyser.getByteTimeDomainData(dataArray);
 
     let sumSquares = 0;
-
     for (let i = 0; i < dataArray.length; i++) {
       let v = (dataArray[i] - 128) / 128;
       sumSquares += v * v;
     }
 
     let rms = Math.sqrt(sumSquares / dataArray.length);
-
     let db = 20 * Math.log10(rms);
-
     if (db === -Infinity) db = -100;
     db = Math.max(-100, Math.min(0, db));
 
     let level = Math.pow((db + 60) / 60, 1.5) * 100;
-
-    // ✅ KRİTİK FIX
     if (!isFinite(level) || isNaN(level)) level = 10;
-
     level = Math.max(0, Math.min(100, Math.round(level)));
 
     levels.push(level);
-
     document.getElementById("levelBar").style.width = level + "%";
     document.getElementById("levelValue").innerText = level;
-
   }, 100);
 }
 
 function stopMeasurement() {
-
   clearInterval(timerInterval);
   clearInterval(levelInterval);
 
   let avg = 0;
-
   if (levels.length > 0) {
     let total = levels.reduce((a, b) => a + b, 0);
     avg = Math.round(total / levels.length);
   }
 
-  document.getElementById("status").innerText =
-    "Ortalama Ses Seviyesi: " + avg;
+  document.getElementById("status").innerText = "Ortalama Ses Seviyesi: " + avg;
 
   try {
-    const player = parent.GetPlayer();
-    player.SetVar("ses_seviyesi", avg);
+    let player = window.parent.GetPlayer();
+    player.SetVar("ses_deger", avg);
   } catch (e) {}
 
   if (stream) {
@@ -214,9 +192,8 @@ function stopMeasurement() {
   }
 }
 
-window.addEventListener("message", (event) => {
-  if (event.data === "record") startRecording();
-});
+// Sayfa açılınca otomatik başla
+window.onload = () => startRecording();
 
 </script>
 
